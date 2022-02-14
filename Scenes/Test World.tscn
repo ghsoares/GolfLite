@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Scenes/Ball.tscn" type="PackedScene" id=1]
+
+[sub_resource type="SphereMesh" id=1]
+radius = 16.0
+height = 32.0
+radial_segments = 4
+rings = 11
+
+[sub_resource type="CircleShape2D" id=2]
+radius = 16.0
+
+[node name="Test World" type="Node2D"]
+
+[node name="Ball" parent="." instance=ExtResource( 1 )]
+position = Vector2( 0, 16 )
+
+[node name="Other" type="RigidBody2D" parent="."]
+position = Vector2( 454, 20 )
+gravity_scale = 0.0
+linear_damp = 0.25
+
+[node name="Spr" type="MeshInstance2D" parent="Other"]
+mesh = SubResource( 1 )
+
+[node name="Col" type="CollisionShape2D" parent="Other"]
+shape = SubResource( 2 )
