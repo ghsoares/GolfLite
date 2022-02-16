@@ -1,0 +1,22 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec4 shadow_color : hint_color = vec4(1.0);
+
+void fragment() {
+    vec4 col = texture(TEXTURE, UV);
+    col = shadow_color * col.a;
+    
+    COLOR = col;
+}
+
+
+
+
+"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/shadow_color = Color( 0, 0.2, 0.439216, 0.411765 )

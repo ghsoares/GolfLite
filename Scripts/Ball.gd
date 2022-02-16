@@ -5,6 +5,7 @@ class_name Ball
 # Velocity variables
 var velocity := Vector2.ZERO
 var motion := Vector2.ZERO
+var moving := false
 
 # Physics settings
 export var mass := 1.0
@@ -12,6 +13,10 @@ export var mass := 1.0
 # Velocity settings
 export var velocity_stop_threshold  := 0.1
 export var velocity_max_bounces     := 4
+
+# Signals
+signal start_moving
+signal end_moving
 
 # Internal init
 func _ready() -> void:
@@ -25,6 +30,19 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
     _apply_forces(delta)
     _move(delta)
+
+    # Check if stopped
+    if velocity.length_squared() <= velocity_stop_threshold * velocity_stop_threshold:
+        # If was moving, emit `end_moving`
+        if moving:
+            emit_signal("end_moving")
+            moving = false
+    # Else is moving
+    else:
+        # If wasn't moving, emit `start_moving`
+        if !moving:
+            emit_signal("start_moving")
+            moving = true
 
 # Movement function
 func _apply_forces(delta: float) -> void:
