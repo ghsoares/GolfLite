@@ -15,7 +15,11 @@ export var velocity_max_bounces     := 4
 
 # Internal init
 func _ready() -> void:
-    velocity = Vector2.RIGHT * 256.0
+    var club    := Club.new()
+    club.max_force = 320.0 * 2.0
+
+    tuck(club, 180.0, 1.0)
+    tuck(club, 45.0, 1.0)
 
 # Internal processing
 func _physics_process(delta: float) -> void:
@@ -25,12 +29,19 @@ func _physics_process(delta: float) -> void:
 # Movement function
 func _apply_forces(delta: float) -> void:
     # Calculate drag
-    var drag := 0.25
+    var drag := 100.0
 
-    # Apply drag
-    velocity -= velocity * clamp(
-        delta * drag, 0.0, 1.0
-    )
+    # Get velocity magnitude
+    var mag := velocity.length()
+
+    # Get velocity direction
+    var dir := velocity.normalized()
+
+    # Calculate drag force
+    var drag_force := min(mag, drag * delta)
+
+    # Apply drag force
+    velocity -= dir * drag_force
 
 func _move(delta: float) -> void:
     # Don't move if velocity is less than threshold
@@ -47,7 +58,7 @@ func _move(delta: float) -> void:
         # Bounce motion and velocity
         if col:
             # Collider is static
-            if col.collider is StaticBody2D:
+            if col.collider is StaticBody2D or col.collider is TileMap:
                 _resolve_static_collision(col)
             # Collider is rigidbody
             elif col.collider is RigidBody2D:
@@ -111,6 +122,23 @@ func _resolve_ball_collision(col: KinematicCollision2D) -> void:
     # Apply impulse
     velocity -= (1.0 / mass) * impulse
     col.collider.velocity += (1.0 / col.collider.mass) * impulse
+
+# Tuck functions
+func tuck(club: Club, direction: float, force_mult: float) -> void:
+    # Calculate angle
+    var ang := deg2rad(direction)
+
+    # Calculate dir
+    var dir := Vector2(cos(ang), sin(ang))
+
+    # Calculate velocity along dir
+    var dir_vel := dir.dot(velocity)
+
+    # Calculate force
+    var force   := max(dir_vel, club.max_force * force_mult)
+
+    # Set velocity
+    velocity    = dir * force
 
 # Overrides
 func get_class() -> String: return "Ball"
