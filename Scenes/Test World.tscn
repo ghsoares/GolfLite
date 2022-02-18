@@ -1,15 +1,78 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Scripts/Level.gd" type="Script" id=1]
+[ext_resource path="res://Tilemaps/DebugTilemap.tres" type="TileSet" id=2]
+[ext_resource path="res://Textures/Grass.png" type="Texture" id=3]
 [ext_resource path="res://Scripts/Utils/FlyCam2D.gd" type="Script" id=4]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform float cell_size = 8.0;
+uniform float cell_spacing = 8.0;
+uniform vec4 color_grass_1 : hint_color = vec4(1.0, 0.0, 0.0, 1.0);
+uniform vec4 color_grass_2 : hint_color = vec4(0.0, 0.0, 0.0, 1.0);
+uniform vec4 color_grass_3 : hint_color = vec4(0.0, 1.0, 0.0, 1.0);
+uniform vec4 color_grass_4 : hint_color = vec4(0.0, 1.0, 1.0, 1.0);
+
+void fragment() {
+    float c = texture(TEXTURE, UV).r;
+    
+    vec4 col_1 = mix(color_grass_1, color_grass_2, c);
+    vec4 col_2 = mix(color_grass_3, color_grass_4, c);
+    
+    vec2 id = floor(UV);
+    vec2 cell_id = floor(id / (cell_size + cell_spacing));
+    vec2 cell_tile_id = mod(id, cell_size + cell_spacing);
+    
+    float t = (cell_tile_id.x >= cell_size || cell_tile_id.y >= cell_size)  ?
+            1.0 : 0.0;
+    
+    COLOR = mix(col_1, col_2, t);
+}
+
+
+
+
+"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/cell_size = 15.0
+shader_param/cell_spacing = 1.0
+shader_param/color_grass_1 = Color( 0.329412, 1, 0.65098, 0.392157 )
+shader_param/color_grass_2 = Color( 0.247059, 0.901961, 0.709804, 0.392157 )
+shader_param/color_grass_3 = Color( 1, 0.588235, 0.329412, 0.392157 )
+shader_param/color_grass_4 = Color( 0.901961, 0.435294, 0.247059, 0.392157 )
 
 [node name="Test World" type="Node2D"]
 
 [node name="Level" type="Node2D" parent="."]
 script = ExtResource( 1 )
+level_size = 12
+
+[node name="Grass" type="TextureRect" parent="Level"]
+visible = false
+material = SubResource( 2 )
+margin_left = -256.0
+margin_top = -256.0
+margin_right = 256.0
+margin_bottom = 256.0
+texture = ExtResource( 3 )
+expand = true
+stretch_mode = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tilemap" type="TileMap" parent="Level"]
+tile_set = ExtResource( 2 )
+cell_size = Vector2( 32, 32 )
+format = 1
 
 [node name="FlyCam2D" type="Camera2D" parent="."]
 current = true
 process_mode = 0
 script = ExtResource( 4 )
 zoom_sensitivity = 0.1
+zoom_range = Vector2( 0.1, 20 )

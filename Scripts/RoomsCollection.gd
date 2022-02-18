@@ -26,6 +26,9 @@ func _init_all_rooms() -> void:
     remove_child(collection_root)
     
 func _init_room(room: Node2D) -> void:
+    # Skip room if not visible
+    if !room.visible: return
+
     # Grab room tilemap
     var tilemap := room.get_node("Tilemap") as TileMap
 
@@ -39,12 +42,12 @@ func _init_room(room: Node2D) -> void:
     var btm_b    := []
 
     # Pass foreach connection tile
-    for i in range(32):
+    for i in range(16):
         # Get each side tile
-        var tile_l  := bitmask.get_cell(0 , i )
-        var tile_t  := bitmask.get_cell(i , 0 )
-        var tile_r  := bitmask.get_cell(31, i )
-        var tile_b  := bitmask.get_cell(i , 31)
+        var tile_l  := bitmask.get_cell(0, 15 - i)
+        var tile_t  := bitmask.get_cell(i, 0)
+        var tile_r  := bitmask.get_cell(15, i)
+        var tile_b  := bitmask.get_cell(15 - i, 15)
 
         # Set each bitmap
         btm_l.append(tile_l)
@@ -55,6 +58,7 @@ func _init_room(room: Node2D) -> void:
     # Create room info
     var info    := {
         "name": room.name,
+        "node": room,
         "tilemap": tilemap,
         "bitmasks": [btm_l, btm_t, btm_r, btm_b],
         "id": rooms.size()
@@ -63,53 +67,61 @@ func _init_room(room: Node2D) -> void:
     # Add room info
     rooms.append(info)
 
-    # Add possibilities
+    # Add possibilities, but only if isn't the first room (air)
     # FlipX(2) * Rotation(4) = 8
+    #if info.id != 0:
     for i in range(8):
         possibilities.append({
             "room_id": info.id,
             "state":   i
         })
 
-func _get_room_bitmask(room_info: Dictionary, state: int, side: int) -> Array:
+func get_room_bitmask(room_info: Dictionary, state: int, side: int) -> Array:
     # Flip x from state
     var flip_x  := (state & 0b001) > 0
 
     # Rotation from state
     var rot     := (state & 0b110) >> 1
 
+    # Rotate side index
+    side = ((side - rot) % 4 + 4) % 4
+
     # Swap side if flip x
     if flip_x:
         if side == 0: side = 2
         elif side == 2: side = 0
-    
-    # Rotate side index
-    side = ((side - rot) % 4 + 4) % 4
 
     # Return bitmask
     return [room_info.bitmasks[side], flip_x]
 
-func _bitmasks_match(btm1: Array, btm2: Array, invert1: bool, invert2: bool) -> bool:
-    # Bitmask has length of 32
-    for i in range(32):
-        # Invert bitmask index
-        var i1  := 31 - i if invert1 else i
-        var i2  := 31 - i if invert2 else i
+func bitmasks_match(btm1: Array, btm2: Array, invert1: bool, invert2: bool) -> bool:
+    # Bitmask has length of 16
+    for i in range(16):
+        # Grab indexes
+        var i1  := i
+        var i2  := 15 - i
 
-        # If different, just skip
-        if btm1[i1] != btm2[i2]: return false
+        i1 = 15 - i1 if invert1 else i1
+        i2 = 15 - i2 if invert2 else i2
+
+        # Grab values
+        var v1  := btm1[i1] as int
+        var v2  := btm2[i2] as int
+
+        # If different, return false
+        if v1 != v2: return false
     return true
 
-func _rooms_match(room1: Dictionary, room2: Dictionary, state1: int, state2: int, side: int) -> bool:
+func rooms_match(room1: Dictionary, room2: Dictionary, state1: int, state2: int, side: int) -> bool:
     # Get other side
     var side2   := (side + 2) % 4
 
     # Grab bitmasks
-    var btm1    := _get_room_bitmask(room1, state1, side)
-    var btm2    := _get_room_bitmask(room2, state2, side2)
+    var btm1    := get_room_bitmask(room1, state1, side)
+    var btm2    := get_room_bitmask(room2, state2, side2)
 
     # Match bitmasks
-    return _bitmasks_match(btm1[0], btm2[0], btm1[1], btm2[1])
+    return bitmasks_match(btm1[0], btm2[0], btm1[1], btm2[1])
 
 func get_num_rooms() -> int: return rooms.size()
 
@@ -117,12 +129,8 @@ func get_num_possibilities() -> int: return possibilities.size()
 
 func get_room_info(id: int) -> Dictionary: return rooms[id]
 
-
-
-
-
-
-
+func get_possibility_room_info(id: int) -> Dictionary:
+    return possibilities[id]
 
 
 

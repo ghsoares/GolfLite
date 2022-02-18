@@ -36,6 +36,10 @@ config/name="GolfLite"
 run/main_scene="res://Scenes/Test World.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+RoomsCollection="*res://Scenes/Rooms.tscn"
+
 [importer_defaults]
 
 texture={
